@@ -34,3 +34,4 @@ SahajAI acts as a personal digital guide that:
 - Anshul Tyagi (Team Lead)
 - Saksham Agnihotri
 - Shubh Aggarwal
+- Neel Gupta
