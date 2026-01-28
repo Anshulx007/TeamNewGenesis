@@ -1,10 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-# Routers (add more as you build features)
-# from backend.app.routers import chat
-# from backend.app.routers import documents
-# from backend.app.routers import offices
+from app.routers import chat
 
 app = FastAPI(
     title="SahajAI API",
@@ -25,6 +21,12 @@ app.add_middleware(
 )
 
 # -----------------------
+# Register Routers
+# -----------------------
+
+app.include_router(chat.router)
+
+# -----------------------
 # Health & Root Endpoints
 # -----------------------
 
@@ -43,15 +45,6 @@ def health():
         "service": "SahajAI backend",
         "version": app.version
     }
-
-# -----------------------
-# Register Routers
-# -----------------------
-
-# Uncomment as you add them
-# app.include_router(chat.router, prefix="/api", tags=["Chat"])
-# app.include_router(documents.router, prefix="/api", tags=["Documents"])
-# app.include_router(offices.router, prefix="/api", tags=["Offices"])
 
 # -----------------------
 # Startup & Shutdown Events
