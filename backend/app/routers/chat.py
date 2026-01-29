@@ -13,6 +13,8 @@ class ChatResponse(BaseModel):
 @router.post("/", response_model=ChatResponse)
 async def chat(req: ChatRequest):
     # TEMP: Demo reply (LLM comes next)
+    print(f"📩 User said: {req.message} | Language: {req.language}")
+
     reply = f"You said: {req.message}. SahajAI will process this."
 
     return ChatResponse(reply=reply)

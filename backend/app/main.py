@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.routers import chat
 
 app = FastAPI(
@@ -14,20 +15,20 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For hackathon; restrict in production
+    allow_origins=["*"],  # Hackathon only
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # -----------------------
-# Register Routers
+# Routers
 # -----------------------
 
 app.include_router(chat.router)
 
 # -----------------------
-# Health & Root Endpoints
+# Health & Root
 # -----------------------
 
 @app.get("/")
@@ -47,7 +48,7 @@ def health():
     }
 
 # -----------------------
-# Startup & Shutdown Events
+# Startup & Shutdown
 # -----------------------
 
 @app.on_event("startup")
