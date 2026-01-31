@@ -3,20 +3,22 @@ import sys
 import os
 import signal
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 processes = []
 
 def start_backend():
     print("🚀 Starting Backend...")
     return subprocess.Popen(
         ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"],
-        cwd="backend"
+        cwd=os.path.join(BASE_DIR, "backend")
     )
 
 def start_frontend():
     print("🎨 Starting Frontend...")
     return subprocess.Popen(
         ["npm", "run", "dev"],
-        cwd="frontend"
+        cwd=os.path.join(BASE_DIR, "frontend")
     )
 
 def cleanup(signum, frame):
@@ -43,6 +45,5 @@ if __name__ == "__main__":
     print("Frontend: http://localhost:5173")
     print("Press CTRL+C to stop everything\n")
 
-    # Wait for both
     backend_proc.wait()
     frontend_proc.wait()

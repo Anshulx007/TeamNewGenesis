@@ -7,25 +7,26 @@ function App() {
   const [chat, setChat] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const sendMessage = async () => {
-    if (!message.trim()) return;
+const sendMessage = async () => {
+  if (!message.trim()) return;
 
-    const userMsg = { from: "user", text: message };
-    setChat(prev => [...prev, userMsg]);
-    setLoading(true);
+  const userMsg = { from: "user", text: message };
+  setChat(prev => [...prev, userMsg]);
+  setLoading(true);
 
-    try {
-      const data = await sendChatMessage(message, "en");
+  try {
+    const data = await sendChatMessage(message, "en");
 
-      const botMsg = { from: "bot", text: data.reply };
-      setChat(prev => [...prev, botMsg]);
-    } catch (err) {
-      setChat(prev => [...prev, { from: "bot", text: "❌ Backend error" }]);
-    }
+    // ✅ correct field
+    const botMsg = { from: "bot", text: data.answer };
+    setChat(prev => [...prev, botMsg]);
+  } catch (err) {
+    setChat(prev => [...prev, { from: "bot", text: "❌ Backend error" }]);
+  }
 
-    setMessage("");
-    setLoading(false);
-  };
+  setMessage("");
+  setLoading(false);
+};
 
   return (
     <div style={{ padding: 20 }}>
