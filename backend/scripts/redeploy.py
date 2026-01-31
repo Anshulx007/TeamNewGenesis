@@ -1,56 +1,70 @@
 import subprocess
 import os
-import signal
-import time
+import logging
+from datetime import datetime
 
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
-BACKEND_DIR = os.path.join(ROOT_DIR, "backend")
+# ----------------------------
+# Paths
+# ----------------------------
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "../.."))
+LOG_DIR = os.path.join(ROOT_DIR, "logs")
+LOG_FILE = os.path.join(LOG_DIR, "redeploy.log")
+
+REDEPLOY_SCRIPT = os.path.join(SCRIPT_DIR, "redeploy.sh")
+
+# Ensure logs directory exists
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# ----------------------------
+# Logging setup
+# ----------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.StreamHandler(),              # console
+        logging.FileHandler(LOG_FILE, mode="a")  # file
+    ]
+)
+
+logger = logging.getLogger("sahajai-redeploy")
 
 
-def run(cmd, cwd=None):
-    print(f"▶️ Running: {' '.join(cmd)}")
-    subprocess.run(cmd, cwd=cwd, check=True)
+def run_redeploy():
+    if not os.path.exists(REDEPLOY_SCRIPT):
+        logger.error("❌ redeploy.sh not found at %s", REDEPLOY_SCRIPT)
+        return
 
+    logger.info("🔄 Starting redeploy via redeploy.sh")
 
-def redeploy_frontend():
-    print("\n🌍 Redeploying Frontend")
-
-    run(["npm", "install"], cwd=FRONTEND_DIR)
-    run(["npm", "run", "build"], cwd=FRONTEND_DIR)
-    run(["netlify", "deploy", "--prod", "--dir=dist"], cwd=FRONTEND_DIR)
-
-    print("✅ Frontend redeployed")
-
-
-def restart_backend():
-    print("\n🔁 Restarting Backend")
-
-    # Kill existing uvicorn process if running
-    subprocess.run(
-        ["pkill", "-f", "uvicorn app.main:app"],
-        check=False
+    process = subprocess.Popen(
+        ["bash", REDEPLOY_SCRIPT],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True
     )
 
-    time.sleep(1)
+    # Stream output line-by-line into logs
+    for line in process.stdout:
+        logger.info(line.rstrip())
 
-    subprocess.Popen(
-        ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"],
-        cwd=BACKEND_DIR,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        start_new_session=True
-    )
+    process.wait()
 
-    time.sleep(2)
-    print("✅ Backend restarted")
+    if process.returncode == 0:
+        logger.info("✅ Redeploy completed successfully")
+    else:
+        logger.error("❌ Redeploy failed with exit code %s", process.returncode)
 
 
 if __name__ == "__main__":
-    print("🔄 SAHAJAI REDEPLOY STARTED")
+    logger.info("========================================")
+    logger.info("SAHAJAI REDEPLOY RUN STARTED")
+    logger.info("========================================")
 
-    redeploy_frontend()
-    restart_backend()
+    run_redeploy()
 
-    print("\n⚠️ Cloudflare tunnel NOT restarted (URL remains stable)")
-    print("✅ Redeploy complete")
+    logger.info("========================================")
+    logger.info("SAHAJAI REDEPLOY RUN FINISHED")
+    logger.info("========================================")
