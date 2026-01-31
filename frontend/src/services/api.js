@@ -1,6 +1,8 @@
-const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
+
+const BACKEND_URL =
+  import.meta.env.VITE_BACKEND_URL || "/api";
+console.log("USING BACKEND_URL =", BACKEND_URL);
 export async function sendChatMessage(message, language = "en") {
   const res = await fetch(`${BACKEND_URL}/api/chat/`, {
     method: "POST",
