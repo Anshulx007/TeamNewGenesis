@@ -52,7 +52,7 @@ async def chat(req: ChatRequest):
     # MULTI-QUESTION HANDLING
     # -------------------------
     questions = split_questions(message)
-    answers = []
+    answers = set()  # 🔑 use set to avoid duplicates
 
     for q in questions:
         intent = detect_intent(q)
@@ -60,7 +60,7 @@ async def chat(req: ChatRequest):
         if intent == "document_help":
             key, data = get_document_info(q)
             if data:
-                answers.append(
+                answers.add(
                     f"Documents required for {key.title()}:\n" +
                     "\n".join(f"- {d}" for d in data["documents"])
                 )
@@ -68,7 +68,7 @@ async def chat(req: ChatRequest):
         elif intent == "scheme_info":
             key, data = get_scheme_info(q)
             if data:
-                answers.append(data["description"])
+                answers.add(data["description"])
 
     # ✅ RETURN COMBINED ANSWER
     if answers:
@@ -76,7 +76,7 @@ async def chat(req: ChatRequest):
             mode="answer",
             intent="multi",
             language=language,
-            answer="\n\n".join(answers),
+            answer="\n\n".join(sorted(answers)),
             confidence=0.8
         )
 
