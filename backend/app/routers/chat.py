@@ -1,21 +1,41 @@
 from fastapi import APIRouter
 from app.schemas.chat import ChatRequest, ChatResponse
+from app.services.intent_router import detect_intent, split_questions
+from app.services.knowledge_service import get_document_info, get_scheme_info
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
+
 
 @router.post("/", response_model=ChatResponse)
 async def chat(req: ChatRequest):
     message = req.message.strip().lower()
     language = req.language or "en"
 
-    print(f"📩 User said: {req.message} | Language: {language}")
+    # -------------------------
+    # GREETING (NO LLM)
+    # -------------------------
+    if message in ["hi", "hello", "hey", "namaste", "नमस्ते"]:
+        if language == "hi":
+            return ChatResponse(
+                mode="answer",
+                intent="unknown",
+                language="hi",
+                answer=(
+                    "नमस्ते! 👋 मैं SahajAI हूँ।\n\n"
+                    "मैं आपकी मदद कर सकता हूँ:\n"
+                    "• सरकारी योजनाओं की जानकारी\n"
+                    "• आवश्यक दस्तावेज़\n"
+                    "• कार्यालय मार्गदर्शन (तहसील, CSC, जन सेवा केंद्र)\n"
+                    "• फ़ॉर्म भरने के चरण\n\n"
+                    "आप क्या जानना चाहते हैं?"
+                ),
+                confidence=0.9
+            )
 
-    # ✅ Greeting handling (NO LLM)
-    if message in ["hi", "hello", "hey", "namaste"]:
         return ChatResponse(
             mode="answer",
             intent="unknown",
-            language=language,
+            language="en",
             answer=(
                 "Hello! 👋 I’m SahajAI.\n\n"
                 "I can help you with:\n"
@@ -25,20 +45,63 @@ async def chat(req: ChatRequest):
                 "• Step-by-step form filling\n\n"
                 "How can I assist you today?"
             ),
-            next_actions=[
-                "Ask about a government scheme",
-                "Ask which documents are required",
-                "Ask where to apply for a service",
-                "Ask for help filling a form"
-            ],
             confidence=0.9
         )
 
-    # fallback placeholder (temporary)
+    # -------------------------
+    # MULTI-QUESTION HANDLING
+    # -------------------------
+    questions = split_questions(message)
+    answers = []
+
+    for q in questions:
+        intent = detect_intent(q)
+
+        if intent == "document_help":
+            key, data = get_document_info(q)
+            if data:
+                answers.append(
+                    f"Documents required for {key.title()}:\n" +
+                    "\n".join(f"- {d}" for d in data["documents"])
+                )
+
+        elif intent == "scheme_info":
+            key, data = get_scheme_info(q)
+            if data:
+                answers.append(data["description"])
+
+    # ✅ RETURN COMBINED ANSWER
+    if answers:
+        return ChatResponse(
+            mode="answer",
+            intent="multi",
+            language=language,
+            answer="\n\n".join(answers),
+            confidence=0.8
+        )
+
+    # -------------------------
+    # FINAL FALLBACK (BILINGUAL)
+    # -------------------------
+    if language == "hi":
+        return ChatResponse(
+            mode="fallback",
+            intent="unknown",
+            language="hi",
+            answer=(
+                "माफ़ कीजिए, मुझे इस प्रश्न की सटीक जानकारी नहीं मिली।\n"
+                "कृपया सरकारी योजनाओं, दस्तावेज़ों या कार्यालयों से संबंधित प्रश्न पूछें।"
+            ),
+            confidence=0.3
+        )
+
     return ChatResponse(
-        mode="answer",
+        mode="fallback",
         intent="unknown",
-        language=language,
-        answer=f"You said: {req.message}. SahajAI will process this.",
-        confidence=0.2
+        language="en",
+        answer=(
+            "Sorry, I couldn’t find exact information for this query.\n"
+            "Please ask about government schemes, documents, or offices."
+        ),
+        confidence=0.3
     )

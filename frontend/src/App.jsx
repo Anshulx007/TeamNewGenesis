@@ -6,49 +6,85 @@ function App() {
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [language, setLanguage] = useState("en"); // optional, backend already supports it
 
-const sendMessage = async () => {
-  if (!message.trim()) return;
+  const sendMessage = async () => {
+    if (!message.trim()) return;
 
-  const userMsg = { from: "user", text: message };
-  setChat(prev => [...prev, userMsg]);
-  setLoading(true);
+    // Add user message
+    const userMsg = { from: "user", text: message };
+    setChat(prev => [...prev, userMsg]);
+    setLoading(true);
 
-  try {
-    const data = await sendChatMessage(message, "en");
+    try {
+      const data = await sendChatMessage(message, language);
 
-    // ✅ correct field
-    const botMsg = { from: "bot", text: data.answer };
-    setChat(prev => [...prev, botMsg]);
-  } catch (err) {
-    setChat(prev => [...prev, { from: "bot", text: "❌ Backend error" }]);
-  }
+      // Add bot message (IMPORTANT: use data.answer)
+      const botMsg = { from: "bot", text: data.answer };
+      setChat(prev => [...prev, botMsg]);
+    } catch (err) {
+      setChat(prev => [
+        ...prev,
+        { from: "bot", text: "❌ Backend error. Please try again." }
+      ]);
+    }
 
-  setMessage("");
-  setLoading(false);
-};
+    setMessage("");
+    setLoading(false);
+  };
 
   return (
-    <div style={{ padding: 20 }}>
+    <div style={{ padding: 20, maxWidth: 800, margin: "auto" }}>
       <h1>SahajAI</h1>
 
-      <div style={{ border: "1px solid #ccc", padding: 10, minHeight: 300 }}>
+      {/* Language Toggle */}
+      <div style={{ marginBottom: 10 }}>
+        <button onClick={() => setLanguage("en")}>EN</button>
+        <button onClick={() => setLanguage("hi")} style={{ marginLeft: 5 }}>
+          HI
+        </button>
+      </div>
+
+      {/* Chat Box */}
+      <div
+        style={{
+          border: "1px solid #ccc",
+          padding: 10,
+          minHeight: 300,
+          borderRadius: 4
+        }}
+      >
         {chat.map((msg, i) => (
-          <div key={i} style={{ textAlign: msg.from === "user" ? "right" : "left" }}>
-            <b>{msg.from === "user" ? "You" : "SahajAI"}:</b> {msg.text}
+          <div
+            key={i}
+            style={{
+              textAlign: msg.from === "user" ? "right" : "left",
+              marginBottom: 8,
+              whiteSpace: "pre-line" // ✅ multiline support
+            }}
+          >
+            <b>{msg.from === "user" ? "You" : "SahajAI"}:</b>{" "}
+            {msg.text}
           </div>
         ))}
+
         {loading && <div>SahajAI is typing...</div>}
       </div>
 
+      {/* Input Box */}
       <div style={{ marginTop: 10 }}>
         <input
-          style={{ width: "80%" }}
+          style={{ width: "80%", padding: 6 }}
           value={message}
           onChange={e => setMessage(e.target.value)}
-          placeholder="Ask about government schemes..."
+          onKeyDown={e => {
+            if (e.key === "Enter") sendMessage();
+          }}
+          placeholder="Ask about government schemes, documents..."
         />
-        <button onClick={sendMessage}>Send</button>
+        <button onClick={sendMessage} style={{ marginLeft: 5 }}>
+          Send
+        </button>
       </div>
     </div>
   );

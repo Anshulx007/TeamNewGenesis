@@ -1,0 +1,10 @@
+{
+  "aadhaar": {
+    "documents": [
+      "Proof of Identity",
+      "Proof of Address",
+      "Date of Birth Proof"
+    ],
+    "office": "Aadhaar Seva Kendra / CSC"
+  }
+}

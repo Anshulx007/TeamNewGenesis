@@ -1,0 +1,10 @@
+{
+  "pm awas yojana": {
+    "description": "Pradhan Mantri Awas Yojana provides affordable housing.",
+    "eligibility": [
+      "Indian citizen",
+      "Does not own a pucca house"
+    ],
+    "office": "Municipal Corporation / CSC"
+  }
+}
